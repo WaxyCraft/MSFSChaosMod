@@ -44,6 +44,6 @@
 * Open Canopy
 * Random Indicated Altitude
 * Turn On Smoke
-* Turn Off Cabin Life
-* Fail All Panel
+* Turn Off Cabin Light
+* Fail All Panels
 * Lock Yoke
