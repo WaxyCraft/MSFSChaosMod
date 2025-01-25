@@ -9,6 +9,13 @@ class EventType(Enum):
      SIM_METHOD = 3 # Used for SimMethodEvent class. These Events trigger various other methods built into SimConnect. SimConnect API Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_API_Reference.htm
      CUSTOM = 4     # Used for all classes that begin with Custom. These Events allow for arbitrary code to be used for more complicated Events.
 
+class Operation(Enum):
+     ADD = 0
+     SUB = 1
+     MUL = 2
+     DIV = 3
+     EXP = 4
+
 # All Events run through an instance of the EventHandler.
 class EventHandler:
      def __init__(self, requestTime: int = 10) -> None:
@@ -86,13 +93,6 @@ class Event:
 
 # Instuctions that get passed to a SimVarEvent telling it what to set each variable to (IE: Set SimVar "PLANE_ALTITUDE" to "PLANE_ALTITUDE" + 1000).
 class SimVarNotation:
-     class Operation(Enum):
-          ADD = 0
-          SUB = 1
-          MUL = 2
-          DIV = 3
-          EXP = 4
-
      def __init__(self, setVar: str, value: str | int | float, operation: Operation = None, modifyValue: str | int | float = None) -> None:
           self._setVar = setVar           # Varible to be set.
           self._value = value             # Value to set to.
@@ -141,15 +141,15 @@ class SimVarEvent(Event):
 
           if operation and modifyValue:
                match operation:
-                    case SimVarNotation.Operation.ADD:
+                    case Operation.ADD:
                          valToSet = value + modifyValue
-                    case SimVarNotation.Operation.SUB:
+                    case Operation.SUB:
                          valToSet = value - modifyValue
-                    case SimVarNotation.Operation.MUL:
+                    case Operation.MUL:
                          valToSet = value * modifyValue
-                    case SimVarNotation.Operation.DIV:
+                    case Operation.DIV:
                          valToSet = value / modifyValue
-                    case SimVarNotation.Operation.EXP:
+                    case Operation.EXP:
                          valToSet = value ** modifyValue
                          
           if self._aq.set(setVar, valToSet):
@@ -210,18 +210,116 @@ class SimEventEvent(Event):
                     else:
                          self._triggerSimEvent(event)
 
+# Container for arguments for SimMethod.
+class SimMethodArgument:
+     def __init__(self, argValue, operation: Operation = None, modifyValue: str | int | float = None) -> None:
+          self._argValue = argValue # Base value of the argument.
+          self._operation = operation         # The operation between the value and modifyValue.
+          self._modifyValue = modifyValue     # Value to modify the value with.
+
+     @property
+     def argValue(self) -> str:
+          return self._argValue
+     
+     @property
+     def operation(self) -> tuple:
+          return self._operation
+     
+     @property
+     def modifyValue(self) -> tuple:
+          return self._modifyValue
+
+# Container for SimMethods.
+class SimMethodNotation:
+     def __init__(self, method: str, *args: SimMethodArgument) -> None:
+          self._method = method
+          self._args = args
+
+     @property
+     def method(self) -> str:
+          return self._method
+     
+     @property
+     def args(self) -> tuple:
+          return self._args
+
+class SimMethodEvent(Event):
+     def __init__(self, eventHandler: EventHandler, eventID: int, name: str, methods: SimMethodNotation | list[SimMethodNotation], displayName: str = None, description: str = None) -> None:
+          super().__init__(eventID, name, displayName, description)
+          self._eventType = EventType.SIM_METHOD
+          self._sm = eventHandler.sm
+          self._aq = eventHandler.aq
+          self._methods = methods
+
+     def _evalArgument(self, arg: SimMethodArgument) -> any:
+          print(arg)
+          argValue = arg.argValue
+          modifyValue = arg.modifyValue
+          operation = arg.operation
+
+          if type(modifyValue) == str: 
+               modifyValue = self._aq.get(modifyValue)
+               
+          outValue = argValue
+
+          if operation and modifyValue:
+               match operation:
+                    case Operation.ADD:
+                         outValue = argValue + modifyValue
+                    case Operation.SUB:
+                         outValue = argValue - modifyValue
+                    case Operation.MUL:
+                         outValue = argValue * modifyValue
+                    case Operation.DIV:
+                         outValue = argValue / modifyValue
+                    case Operation.EXP:
+                         outValue = argValue ** modifyValue
+
+          return outValue
+
+     def _convertArgumentsToValues(self, args: tuple[SimMethodArgument]) -> tuple:
+          out = []
+          for arg in args:
+               out.append(self._evalArgument(arg))
+
+          return tuple(out)
+
+     def _callSimMethod(self, method: SimMethodNotation) -> Response:
+          toCall = getattr(self._sm, method.method)
+          try: 
+               print(*self._convertArgumentsToValues(method.args))
+               toCall(*self._convertArgumentsToValues(method.args))
+               return Response(ErrorHandler.newResponseID, ResponseStatus.OK)
+          except:
+               return Response(ErrorHandler.newResponseID, ResponseStatus.WARNING, "Failed To call SimMethod")
+
+
+     def run(self): 
+          if type(self._methods) == SimMethodNotation:
+               return self._callSimMethod(self._methods)
+          else:
+               for method in self._methods:
+                    if method == self._methods[-1]:
+                         return self._callSimMethod(method)
+                    else:
+                         self._callSimMethod(method)
+
 # ----------------------------- TESTING CODE ----------------------------- #
 
-#import time
+# import time
 
-# ev = EventHandler()
+# ev = EventHandler(2000)
 
-# event = SimEventEvent(ev, ev.newEventID(), "test", [SimEventNotation("AP_ALT_VAR_SET_ENGLISH", 8000), SimEventNotation("THROTTLE_40")])
+# # event = SimEventEvent(ev, ev.newEventID(), "test", [SimEventNotation("AP_ALT_VAR_SET_ENGLISH", 8000), SimEventNotation("THROTTLE_40")])
+# # time.sleep(3)
+# # print(event.run())
+
+# # bta = SimVarEvent(ev, ev.newEventID(), "test", [SimVarNotation("PLANE_ALTITUDE", "PLANE_ALTITUDE", Operation.ADD, 4000), SimVarNotation("AIRSPEED_TRUE", 0)])
+# # time.sleep(3)
+# # print(bta.run())
+
+# method = SimMethodEvent(ev, ev.newEventID(), "test", SimMethodNotation("createSimulatedObject", SimMethodArgument("Windsock"), SimMethodArgument(0, Operation.ADD, "PLANE_LATITUDE"), SimMethodArgument(0, Operation.ADD, "PLANE_LONGITUDE"), SimMethodArgument(ev.sm.new_request_id()), SimMethodArgument(360), SimMethodArgument(1), SimMethodArgument(0, Operation.ADD, "PLANE_ALTITUDE"), SimMethodArgument(0), SimMethodArgument(0), SimMethodArgument(0)))
+# # ev.sm.createSimulatedObject("A330-BelugaXL", "PLANE_LATITUDE", "PLANE_LONGITUDE", ev.sm.new_request_id, 360, 0, "PLANE_ALTITUDE", 0, 0, 0)
 # time.sleep(3)
-# print(event.run())
-
-# bta = SimVarEvent(ev, ev.newEventID(), "test", [SimVarNotation("PLANE_ALTITUDE", "PLANE_ALTITUDE", SimVarNotation.Operation.ADD, 4000), SimVarNotation("AIRSPEED_TRUE", 0)])
-# time.sleep(3)
-# print(bta.run())
-
+# print(method.run())
 # ev.exit()
