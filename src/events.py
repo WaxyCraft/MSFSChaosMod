@@ -213,9 +213,9 @@ class SimEventEvent(Event):
 # Container for arguments for SimMethod.
 class SimMethodArgument:
      def __init__(self, argValue, operation: Operation = None, modifyValue: str | int | float = None) -> None:
-          self._argValue = argValue # Base value of the argument.
-          self._operation = operation         # The operation between the value and modifyValue.
-          self._modifyValue = modifyValue     # Value to modify the value with.
+          self._argValue = argValue       # Base value of the argument.
+          self._operation = operation     # The operation between the value and modifyValue.
+          self._modifyValue = modifyValue # Value to modify the value with.
 
      @property
      def argValue(self) -> str:
@@ -243,6 +243,7 @@ class SimMethodNotation:
      def args(self) -> tuple:
           return self._args
 
+# Class For Events that trigger various other methods built into SimConnect. SimConnect API Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_API_Reference.htm
 class SimMethodEvent(Event):
      def __init__(self, eventHandler: EventHandler, eventID: int, name: str, methods: SimMethodNotation | list[SimMethodNotation], displayName: str = None, description: str = None) -> None:
           super().__init__(eventID, name, displayName, description)
@@ -251,8 +252,8 @@ class SimMethodEvent(Event):
           self._aq = eventHandler.aq
           self._methods = methods
 
+     # Calculates the value of a SimMethodArgument.
      def _evalArgument(self, arg: SimMethodArgument) -> any:
-          print(arg)
           argValue = arg.argValue
           modifyValue = arg.modifyValue
           operation = arg.operation
@@ -277,6 +278,7 @@ class SimMethodEvent(Event):
 
           return outValue
 
+     # Converts the SimMethodArgument objects into values to pass through the method.
      def _convertArgumentsToValues(self, args: tuple[SimMethodArgument]) -> tuple:
           out = []
           for arg in args:
@@ -284,11 +286,12 @@ class SimMethodEvent(Event):
 
           return tuple(out)
 
+     # Calls the SimMethod.
      def _callSimMethod(self, method: SimMethodNotation) -> Response:
           toCall = getattr(self._sm, method.method)
           try: 
-               print(*self._convertArgumentsToValues(method.args))
-               toCall(*self._convertArgumentsToValues(method.args))
+               x = self._convertArgumentsToValues(method.args)
+               toCall(*x)
                return Response(ErrorHandler.newResponseID, ResponseStatus.OK)
           except:
                return Response(ErrorHandler.newResponseID, ResponseStatus.WARNING, "Failed To call SimMethod")
@@ -308,18 +311,19 @@ class SimMethodEvent(Event):
 
 # import time
 
-# ev = EventHandler(2000)
+# ev = EventHandler()
 
-# # event = SimEventEvent(ev, ev.newEventID(), "test", [SimEventNotation("AP_ALT_VAR_SET_ENGLISH", 8000), SimEventNotation("THROTTLE_40")])
-# # time.sleep(3)
-# # print(event.run())
-
-# # bta = SimVarEvent(ev, ev.newEventID(), "test", [SimVarNotation("PLANE_ALTITUDE", "PLANE_ALTITUDE", Operation.ADD, 4000), SimVarNotation("AIRSPEED_TRUE", 0)])
-# # time.sleep(3)
-# # print(bta.run())
-
-# method = SimMethodEvent(ev, ev.newEventID(), "test", SimMethodNotation("createSimulatedObject", SimMethodArgument("Windsock"), SimMethodArgument(0, Operation.ADD, "PLANE_LATITUDE"), SimMethodArgument(0, Operation.ADD, "PLANE_LONGITUDE"), SimMethodArgument(ev.sm.new_request_id()), SimMethodArgument(360), SimMethodArgument(1), SimMethodArgument(0, Operation.ADD, "PLANE_ALTITUDE"), SimMethodArgument(0), SimMethodArgument(0), SimMethodArgument(0)))
-# # ev.sm.createSimulatedObject("A330-BelugaXL", "PLANE_LATITUDE", "PLANE_LONGITUDE", ev.sm.new_request_id, 360, 0, "PLANE_ALTITUDE", 0, 0, 0)
+# event = SimEventEvent(ev, ev.newEventID(), "test", [SimEventNotation("AP_ALT_VAR_SET_ENGLISH", 8000), SimEventNotation("THROTTLE_40")])
 # time.sleep(3)
-# print(method.run())
+# print(event.run())
+
+# bta = SimVarEvent(ev, ev.newEventID(), "test", [SimVarNotation("PLANE_ALTITUDE", "PLANE_ALTITUDE", Operation.ADD, 4000), SimVarNotation("AIRSPEED_TRUE", 0)])
+# time.sleep(3)
+# print(bta.run())
+
+# method = SimMethodEvent(ev, ev.newEventID(), "test", SimMethodNotation("createSimulatedObject", SimMethodArgument("ASO_TruckUtility01"), SimMethodArgument(0, Operation.ADD, "PLANE_LATITUDE"), SimMethodArgument(0, Operation.ADD, "PLANE_LONGITUDE"), SimMethodArgument(ev.sm.new_request_id()), SimMethodArgument(360), SimMethodArgument(0), SimMethodArgument(0, Operation.ADD, "PLANE_ALTITUDE"), SimMethodArgument(0), SimMethodArgument(0), SimMethodArgument(0)))
+# ev.sm.createSimulatedObject("A330-BelugaXL", "PLANE_LATITUDE", "PLANE_LONGITUDE", ev.sm.new_request_id, 360, 0, "PLANE_ALTITUDE", 0, 0, 0)
+# while True:
+#      time.sleep(3)
+#      print(method.run())
 # ev.exit()
