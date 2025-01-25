@@ -2,8 +2,6 @@ from SimConnect import *
 from errorHandling import *
 from enum import Enum
 
-# EVENTS DO NOT WORK IF LIVE TIME IS ENABLED IN GAME!
-
 class EventType(Enum):
      GENERIC = 0    # Used for the base Event class that the others inherit from. Should never actually be used for an Event.
      SIM_VAR = 1    # Used for the SimVarEvent class. These Events modify Simulation Variables. SimVars Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm
@@ -16,6 +14,7 @@ class EventHandler:
      def __init__(self, requestTime: int = 10) -> None:
           self._sm = SimConnect()
           self._aq = AircraftRequests(self._sm, requestTime)
+          self._ae = AircraftEvents(self._sm)
           self.usedEventID = []
           self.largestEventID = 0
 
@@ -27,6 +26,11 @@ class EventHandler:
           else:
                return responseID
           
+     # Must quit at end of program to properly run Events.
+     def exit(self) -> Response:
+          self._sm.exit()
+          return Response(ErrorHandler.newResponseID, ResponseStatus.OK)
+          
      # TODO: Make method to generate random event.
 
      @property
@@ -36,6 +40,10 @@ class EventHandler:
      @property
      def aq(self):
           return self._aq
+     
+     @property
+     def ae(self):
+          return self._ae
 
 # Base Event class.
 class Event:
@@ -154,4 +162,66 @@ class SimVarEvent(Event):
                return self._evalCommand(self._commands)
           else:
                for command in self._commands:
-                    return self._evalCommand(command)
+                    if command == self._commands[-1]:
+                         return self._evalCommand(command)
+                    else:
+                         self._evalCommand(command)
+
+# Container for SimEvents.
+class SimEventNotation:
+     def __init__(self, event: str, *args) -> None:
+          self._event = event
+          self._args = args
+
+     @property
+     def event(self) -> str:
+          return self._event
+     
+     @property
+     def args(self) -> tuple:
+          return self._args
+               
+# Class for Events that trigger Simulation Events. Event IDs Docs: https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
+class SimEventEvent(Event):
+     def __init__(self, eventHandler: EventHandler, eventID: int, name: str, events: SimEventNotation | list[SimEventNotation], displayName: str = None, description: str = None) -> None:
+          super().__init__(eventID, name, displayName, description)
+          self._eventType = EventType.SIM_EVENT
+          self._ae = eventHandler.ae
+          self._aq = eventHandler.aq
+          self._events = events
+
+     # Triggers the SimEvent.
+     def _triggerSimEvent(self, event: SimEventNotation) -> Response:
+          toTrigger = self._ae.find(event.event)
+          if toTrigger is None:
+               return Response(ErrorHandler.newResponseID, ResponseStatus.WARNING, "Failed To Trigger Event")
+          else:
+               toTrigger(*event.args)
+               return Response(ErrorHandler.newResponseID, ResponseStatus.OK)
+          
+     def run(self) -> Response:
+          if type(self._events) == SimEventNotation:
+               return self._triggerSimEvent(self._events)
+
+          else:
+               for event in self._events:
+                    if event == self._events[-1]:
+                         return self._triggerSimEvent(event)
+                    else:
+                         self._triggerSimEvent(event)
+
+# ----------------------------- TESTING CODE ----------------------------- #
+
+#import time
+
+# ev = EventHandler()
+
+# event = SimEventEvent(ev, ev.newEventID(), "test", [SimEventNotation("AP_ALT_VAR_SET_ENGLISH", 8000), SimEventNotation("THROTTLE_40")])
+# time.sleep(3)
+# print(event.run())
+
+# bta = SimVarEvent(ev, ev.newEventID(), "test", [SimVarNotation("PLANE_ALTITUDE", "PLANE_ALTITUDE", SimVarNotation.Operation.ADD, 4000), SimVarNotation("AIRSPEED_TRUE", 0)])
+# time.sleep(3)
+# print(bta.run())
+
+# ev.exit()
