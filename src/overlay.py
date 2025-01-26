@@ -20,36 +20,57 @@ def windowCallback(overlay, window: str) -> list:
 #https://stackoverflow.com/questions/7142342/get-window-position-size-with-python
 
 class Overlay:
-     def __init__(self, initialText: str, updateDelay: int) -> None:
-          self.initialText = initialText
+     def __init__(self, updateDelay: int, overlayWindow: str, fracLocationOffset: tuple[float, float] = (0, 0), size: tuple[int, int] = (0, 0)) -> None:
           self.updateDelay = updateDelay
+          self.overlayWindow = overlayWindow
+          self.fracLocationOffset = fracLocationOffset
           self.root = tk.Tk()
+
+          if size != None:
+               self.width = size[0]
+               self.height = size[1]
 
           self.root.overrideredirect(True) # Overides default window controls.
           self.root.lift()
           self.root.wm_attributes("-topmost", True) # Makes overlay always appear on top of other windows.
-          self.root.config(bg = '#000000')
-          self.root.wm_attributes('-transparentcolor','#000000') # Replaces all colors of #000000 with transparency. #000000 is used since it helps prevent unwanted anti-aliasing with text. 
+
+          self.transparentColor = "#000000"
+          self.root.wm_attributes("-transparentcolor", self.transparentColor) # Replaces all colors of #000000 with transparency. #000000 is used since it helps prevent unwanted anti-aliasing with text. 
+
+     def updatePosition(self) -> None:
+          # Corrects position of overlay on window.
+          overlayWidth = self.root.winfo_width()
+          overlayHeight = self.root.winfo_height()
+          wOffset = self.fracLocationOffset[0]
+          hOffset = self.fracLocationOffset[1]
+
+          x, y, w, h = windowCallback(self, self.overlayWindow)
+
+          overlayX = int(w * wOffset - (overlayWidth // 4)) # Offsets the overlay and corrects for the overlay's own height.
+          overlayY = int(h * hOffset - (overlayHeight // 4))
+          self.root.geometry(str(overlayWidth) + "x" + str(overlayHeight) + "+" + str(x + max(overlayX, 0)) + "+" + str(y + max(overlayY, 0))) # Maxes overlay with 0 to prevent negative overlays.
+          self.root.after(self.updateDelay, self.updatePosition)
+          
+     def run(self) -> None:
+          self.root.after(self.updateDelay, self.updatePosition)
+          self.root.mainloop()
+
+class EventHUD(Overlay):
+     def __init__(self, updateDelay: int, overlayWindow: str, initialText: str, fracLocationOffset: tuple[float, float] = (0, 0)):
+          super().__init__(updateDelay, overlayWindow, fracLocationOffset)
+          self.initialText = initialText
+
+          self.root.config(bg = self.transparentColor)
 
           eventLabel = tk.Label(self.root, text=initialText, font=('Impact', 20), fg="white", bg="#000000")
           eventLabel.pack()
           self.text = eventLabel
 
-          progress = tk.IntVar()
+          progress = tk.IntVar() # Defines progress as the value of the progress bar.
           progressbar = ttk.Progressbar(self.root, orient="horizontal", length=300, mode="determinate", value=100, variable=progress)
           progressbar.pack(pady=20)
           self.progressbar = progressbar
           self.progress = progress
-
-          self.height = self.root.winfo_height()
-          self.width = self.root.winfo_height()
-
-     def updatePosition(self) -> None:
-          # Corrects position of overlay on window.
-          x, y, w, h = windowCallback(self, "Microsoft Flight Simulator - 1.37.19.0")
-          middleHeight = (h // 2) - (self.height // 4) # Vertically centers the overlay.
-          self.root.geometry("+" + str(x) + "+" + str(y + middleHeight))
-          self.root.after(self.updateDelay, self.updatePosition)
 
      def setEvent(self, time: int, eventName: str, event: object, callbackFunction: object) -> None:
           # Changes label to upcoming event and set progress bar time.
@@ -67,15 +88,3 @@ class Overlay:
                self.callbackFunction()
           else:
                self.root.after(int(self.time), self.updateProgress) # The first parameter in the after function is in milliseconds while self.time is in seconds so this is effectivly dividing the time by 1000.
-          
-     def run(self) -> None:
-          self.root.after(self.updateDelay, self.updatePosition)
-          self.root.mainloop()
-
-# def test():
-#      print("hi")
-#      x.setEvent(20, "NEXT EVENT: Drink Water", test)
-
-# x = Overlay("If you are seeing this then something probably went wrong lol.", 1)
-# x.setEvent(60, "Grace Period", test)
-# x.run()

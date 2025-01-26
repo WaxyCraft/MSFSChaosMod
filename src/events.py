@@ -1,59 +1,81 @@
-from SimConnect import *
-import random
+from eventBackend import *
 
-class EventManager: 
+eh = EventHandler()
 
-     def __init__(self, eventsToExclude: list[int] = None) -> None:
-          # Defines the list of events that can be chosen from. This is not constant and can be changed.
-          self.events = [
-               ("No Speed", EventManager.noSpeed),
-               ("Max Speed", EventManager.maxSpeed),
-               ("Turn Off Engine", EventManager.turnOffEngine),
-               ("Barrel Roll", EventManager.barrelRoll),
-               ("-1000 Altitude", EventManager.lowerAltitude),
-               ("+1000 Altitude", EventManager.higherAltitude),
-               ("Dive", EventManager.dive),
-               ("Look Up", EventManager.up)
-               ]
-          
-          if eventsToExclude != None:
-               for event in eventsToExclude:
-                    self.events.pop(event)
+# List of Event objects.
+events = [
 
-          EventManager.sm = SimConnect()
-          EventManager.aq = AircraftRequests(EventManager.sm, _time=2000)
-          EventManager.altitude = EventManager.aq.find("PLANE_ALTITUDE")
-          EventManager.altitude.time = 200
+# ---------- SIM VAR EVENTS ---------- #
+
+# https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm
+
+     # ----- DOUBLE ALTITUDE -----
+     # Doubles the current plane altitude.
+     SimVarEvent(eh, 
+          "doubleAlt", 
+          SimVarNotation("PLANE_ALTITUDE", "PLANE_ALTITUDE", Operation.MUL, 2),
+          "Double Altitude"
+     ),
+
+     # ----- HALVE ALTITUDE -----
+     # Halves the current plane altitude.
+     SimVarEvent(eh, 
+          "halveAlt", 
+          SimVarNotation("PLANE_ALTITUDE", "PLANE_ALTITUDE", Operation.DIV, 2),
+          "Halve Altitude"
+     ),
+
+# ---------- SIM EVENT EVENTS ---------- #
+
+# https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
      
-     # The following is a list of event methods. What they do should be self explanatory by their names.
+     # ----- TOGGLE LANDING GEAR -----
+     # Toggles landing gear.
+     SimEventEvent(eh, 
+          "toggleGear", 
+          SimEventNotation("GEAR_TOGGLE"),
+          "Toggle Landing Gear"
+     ),
 
-     def noSpeed():
-          EventManager.aq.set("AIRSPEED_TRUE",0)
+     # ----- SHUTDOWN ENGINE -----
+     # Auto shutdowns engine.
+     SimEventEvent(eh, 
+          "shutdownEngine", 
+          SimEventNotation("ENGINE_AUTO_SHUTDOWN"),
+          "Shutdown Engine"
+     ),
 
-     def maxSpeed():
-          EventManager.aq.set("AIRSPEED_TRUE",150)
+# ---------- SIM METHOD EVENTS ---------- #
 
-     def turnOffEngine():
-          EventManager.aq.set("GENERAL_ENG_THROTTLE_LEVER_POSITION:1",0)
+#https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_API_Reference.htm
 
-     def barrelRoll():
-          EventManager.aq.set("ROTATION_VELOCITY_BODY_Z",12000)
+     # ----- GO EAST -----
+     # Changes the plane's longitude by -0.005.
+     SimMethodEvent(eh, 
+          "goEast", 
+          SimMethodNotation(
+               "set_pos",
+               SimMethodArgument(None, Operation.SET, "PLANE_ALTITUDE"),
+               SimMethodArgument(None, Operation.SET, "PLANE_LATITUDE"),
+               SimMethodArgument(-0.005, Operation.ADD, "PLANE_LONGITUDE"),
+               SimMethodArgument(None, Operation.INT, "AIRSPEED_TRUE")
+          ),
+          "Go East"
+     ),
 
-     def lowerAltitude():
-          altitude = EventManager.aq.get("PLANE_ALTITUDE")
-          EventManager.aq.set("PLANE_ALTITUDE", altitude - 1000)
+     # ----- GO WEST -----
+     # Changes the plane's longitude by 0.005.
+     SimMethodEvent(eh, 
+          "goWest", 
+          SimMethodNotation(
+               "set_pos",
+               SimMethodArgument(None, Operation.SET, "PLANE_ALTITUDE"),
+               SimMethodArgument(None, Operation.SET, "PLANE_LATITUDE"),
+               SimMethodArgument(0.005, Operation.ADD, "PLANE_LONGITUDE"),
+               SimMethodArgument(None, Operation.INT, "AIRSPEED_TRUE")
+          ),
+          "Go West"
+     )
+]
 
-     def higherAltitude():
-          altitude = EventManager.aq.get("PLANE_ALTITUDE")
-          EventManager.aq.set("PLANE_ALTITUDE", altitude + 1000)
-
-     def dive():
-          EventManager.aq.set("PLANE_PITCH_DEGREES",2)
-
-     def up():
-          EventManager.aq.set("PLANE_PITCH_DEGREES",5)
-
-
-     def getRandomEvent(self) -> tuple:
-          # Chooses a random event and returns it.
-          return(random.choice(self.events))
+eh.addEvent(events)
