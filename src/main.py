@@ -1,5 +1,5 @@
 from overlay import *
-from events import EventManager
+from eventBackend import EventManager
 
 hud = EventHUD(1, "Microsoft Flight Simulator - 1.37.19.0", "Text Goes Here", (0, 0.5))
 manager = EventManager()
