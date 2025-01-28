@@ -1,25 +1,24 @@
 from SimConnect import *
-from errorHandling import *
 from enum import Enum
 import random
 
 class EventType(Enum):
      GENERIC = 0    # Used for the base Event class that the others inherit from. Should never actually be used for an Event.
-     SIM_VAR = 1    # Used for the SimVarEvent class. These Events modify Simulation Variables. SimVars Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm
-     SIM_EVENT = 2  # Used for the SimEventEvent class. These Events trigger Simulation Events. Event IDs Docs: https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
-     SIM_METHOD = 3 # Used for SimMethodEvent class. These Events trigger various other methods built into SimConnect. SimConnect API Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_API_Reference.htm
-     CUSTOM = 4     # Used for all classes that begin with Custom. These Events allow for arbitrary code to be used for more complicated Events.
+     SIM_VAR = 1    # Used for the SimVarEvent class. These events modify Simulation Variables. SimVars Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm
+     SIM_EVENT = 2  # Used for the SimEventEvent class. These events trigger Simulation Events. Event IDs Docs: https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
+     SIM_METHOD = 3 # Used for SimMethodEvent class. These events trigger various other methods built into SimConnect. SimConnect API Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_API_Reference.htm
+     CUSTOM = 4     # Used for all classes that begin with Custom. These events allow for arbitrary code to be used for more complicated events.
 
 class Operation(Enum):
-     SET = 0
-     ADD = 1
-     SUB = 2
-     MUL = 3
-     DIV = 4
-     EXP = 5
-     INT = 6
+     SET = 0 # Sets the value to the modifyValue.
+     ADD = 1 # Adds the modifyValue to the value.
+     SUB = 2 # Subtracts the modifyValue from the value.
+     MUL = 3 # Multiplies the modifyValue with the value.
+     DIV = 4 # Divides the value by the modifyValue.
+     EXP = 5 # Raises the value to the power of the modifyValue.
+     INT = 6 # Set the value to the integer of the modifyValue.
 
-# All Events run through an instance of the EventHandler.
+# All events run through an instance of the EventHandler.
 class EventHandler:
      def __init__(self, requestTime: int = 10) -> None:
           self._sm = SimConnect()
@@ -27,18 +26,16 @@ class EventHandler:
           self._ae = AircraftEvents(self._sm)
           self._events = []
           
-     # Must exit at end of program to properly run Events.
-     def exit(self) -> Response:
+     # Must exit at end of program to properly run events.
+     def exit(self):
           self._sm.exit()
-          return Response(ErrorHandler.newResponseID, ResponseStatus.OK)
 
-     # Adds Events to the EventHandlers list of Events.
-     def addEvent(self, event: Event | list[Event]) -> Response:
+     # Adds events to the EventHandler's list of events.
+     def addEvent(self, event: Event | list[Event]):
           if type(event) == list:
                self._events.extend(event)
           else:
                self._events.append(event)
-          return Response(ErrorHandler.newResponseID, ResponseStatus.OK)
 
      def getRandomEvent(self) -> Event:
           return random.choice(self._events)
@@ -71,8 +68,8 @@ class Event:
           else:
                self._displayName = name
 
-     def run(self) -> Response:
-          return Response(ErrorHandler.newResponseID(), ResponseStatus.WARNING, "Placeholder Code For Event Class")
+     def run(self):
+          pass
      
      @property
      def name(self) -> str:
@@ -117,7 +114,7 @@ class SimVarNotation:
      def modifyValue(self) -> str | int | float:
           return self._modifyValue
 
-# Class for Events that modify Simulation Variables. SimVars Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm
+# Class for events that modify Simulation Variables. SimVars Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm
 class SimVarEvent(Event):
      def __init__(self, eventHandler: EventHandler, name: str, commands: SimVarNotation | list[SimVarNotation], displayName: str = None, description: str = None) -> None:
           super().__init__(name, displayName, description)
@@ -127,7 +124,7 @@ class SimVarEvent(Event):
           self._commands = commands
 
      # Run command from SimVarNotation object.
-     def _evalCommand(self, command: SimVarNotation) -> Response:
+     def _evalCommand(self, command: SimVarNotation):
           setVar = command.setVar
           value = command.value
           operation = command.operation
@@ -157,13 +154,10 @@ class SimVarEvent(Event):
                          valToSet = value ** modifyValue
                     case Operation.INT:
                          valToSet = int(modifyValue)
-                         
-          if self._aq.set(setVar, valToSet):
-               return Response(ErrorHandler.newResponseID, ResponseStatus.OK)
-          else:
-               return Response(ErrorHandler.newResponseID, ResponseStatus.WARNING, "Failed To Set SimVar")
+                    
+          self._aq.set(setVar, valToSet)
 
-     def run(self) -> Response:
+     def run(self):
           if type(self._commands) == SimVarNotation:
                return self._evalCommand(self._commands)
           else:
@@ -187,7 +181,7 @@ class SimEventNotation:
      def args(self) -> tuple:
           return self._args
                
-# Class for Events that trigger Simulation Events. Event IDs Docs: https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
+# Class for events that trigger Simulation Events. Event IDs Docs: https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
 class SimEventEvent(Event):
      def __init__(self, eventHandler: EventHandler, name: str, events: SimEventNotation | list[SimEventNotation], displayName: str = None, description: str = None) -> None:
           super().__init__(name, displayName, description)
@@ -197,15 +191,12 @@ class SimEventEvent(Event):
           self._events = events
 
      # Triggers the SimEvent.
-     def _triggerSimEvent(self, event: SimEventNotation) -> Response:
+     def _triggerSimEvent(self, event: SimEventNotation):
           toTrigger = self._ae.find(event.event)
-          if toTrigger is None:
-               return Response(ErrorHandler.newResponseID, ResponseStatus.WARNING, "Failed To Trigger Event")
-          else:
-               toTrigger(*event.args)
-               return Response(ErrorHandler.newResponseID, ResponseStatus.OK)
+          toTrigger(*event.args)
+
           
-     def run(self) -> Response:
+     def run(self):
           if type(self._events) == SimEventNotation:
                return self._triggerSimEvent(self._events)
 
@@ -249,7 +240,7 @@ class SimMethodNotation:
      def args(self) -> tuple:
           return self._args
 
-# Class For Events that trigger various other methods built into SimConnect. SimConnect API Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_API_Reference.htm
+# Class For events that trigger various other methods built into SimConnect. SimConnect API Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_API_Reference.htm
 class SimMethodEvent(Event):
      def __init__(self, eventHandler: EventHandler, name: str, methods: SimMethodNotation | list[SimMethodNotation], displayName: str = None, description: str = None) -> None:
           super().__init__(name, displayName, description)
@@ -297,14 +288,9 @@ class SimMethodEvent(Event):
           return tuple(out)
 
      # Calls the SimMethod.
-     def _callSimMethod(self, method: SimMethodNotation) -> Response:
+     def _callSimMethod(self, method: SimMethodNotation):
           toCall = getattr(self._sm, method.method)
-          try:
-               toCall(self._convertArgumentsToValues(method.args))
-               return Response(ErrorHandler.newResponseID, ResponseStatus.OK)
-          except:
-               return Response(ErrorHandler.newResponseID, ResponseStatus.WARNING, "Failed To Call SimMethod")
-
+          toCall(*self._convertArgumentsToValues(method.args))
 
      def run(self): 
           if type(self._methods) == SimMethodNotation:
