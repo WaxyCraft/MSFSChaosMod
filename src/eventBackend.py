@@ -68,6 +68,29 @@ class Event:
           else:
                self._displayName = name
 
+     # Evaluates a value with a operation and modifyValue.
+     def _evalModifier(self, value: int | float, operation: Operation, modifyValue: int | float):     
+          out = value
+
+          if operation and modifyValue:
+               match operation:
+                    case Operation.SET:
+                         out = modifyValue
+                    case Operation.ADD:
+                         out = value + modifyValue
+                    case Operation.SUB:
+                         out = value - modifyValue
+                    case Operation.MUL:
+                         out = value * modifyValue
+                    case Operation.DIV:
+                         out = value / modifyValue
+                    case Operation.EXP:
+                         out = value ** modifyValue
+                    case Operation.INT:
+                         out = int(modifyValue)
+
+          return out
+
      def run(self):
           pass
      
@@ -135,27 +158,8 @@ class SimVarEvent(Event):
                modifyValue = self._aq.get(modifyValue)
           if type(value) == str:
                value = self._aq.get(value)
-               
-          valToSet = value
-
-          if operation and modifyValue:
-               match operation:
-                    case Operation.SET:
-                         valToSet = modifyValue
-                    case Operation.ADD:
-                         valToSet = value + modifyValue
-                    case Operation.SUB:
-                         valToSet = value - modifyValue
-                    case Operation.MUL:
-                         valToSet = value * modifyValue
-                    case Operation.DIV:
-                         valToSet = value / modifyValue
-                    case Operation.EXP:
-                         valToSet = value ** modifyValue
-                    case Operation.INT:
-                         valToSet = int(modifyValue)
                     
-          self._aq.set(setVar, valToSet)
+          self._aq.set(setVar, self._evalModifier(value, operation, modifyValue))
 
      def run(self):
           if type(self._commands) == SimVarNotation:
@@ -258,26 +262,7 @@ class SimMethodEvent(Event):
           if type(modifyValue) == str: 
                modifyValue = self._aq.get(modifyValue)
                
-          outValue = argValue
-
-          if operation and modifyValue:
-               match operation:
-                    case Operation.SET:
-                         outValue = modifyValue
-                    case Operation.ADD:
-                         outValue = argValue + modifyValue
-                    case Operation.SUB:
-                         outValue = argValue - modifyValue
-                    case Operation.MUL:
-                         outValue = argValue * modifyValue
-                    case Operation.DIV:
-                         outValue = argValue / modifyValue
-                    case Operation.EXP:
-                         outValue = argValue ** modifyValue
-                    case Operation.INT:
-                         outValue = int(modifyValue)
-
-          return outValue
+          return self._evalModifier(argValue, operation, modifyValue)
 
      # Converts the SimMethodArgument objects into values to pass through the method.
      def _convertArgumentsToValues(self, args: tuple[SimMethodArgument]) -> tuple:
