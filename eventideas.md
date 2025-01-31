@@ -3,21 +3,22 @@
 * Black Out
 * Drink Water
 * Math Quiz
-* Turn Off APU
+* Turn Off APU ☐
 * Red Out
 * No GPS
 * Circuit Breaker
-* Random Camera
+* Random Camera ☐
 * No Realism
 * Jetstream
 * Stall Speed
-* Toggle Landing Gear
-* Right Ailerons
-* Left Ailerons
+* Toggle Landing Gear ☑
+* Right Ailerons ☐
+* Left Ailerons ☐
 * Random Trim
-* Random Elevator & Ailerons
-* Max Flaps
-* Random Rudder
+* Random Elevator ☐
+* Random Ailerons ☐
+* Max Flaps ☐
+* Random Rudder ☐
 * Extend Spoilers
 * Prime Engine
 * Light Engine on Fire
@@ -41,9 +42,9 @@
 * Random ATC Airline
 * Random ATC ID
 * Toggle Auto-coordination
-* Open Canopy
+* Open Canopy ☐
 * Random Indicated Altitude
-* Turn On Smoke
+* Turn On Smoke 
 * Turn Off Cabin Light
 * Fail All Panels
 * Lock Yoke

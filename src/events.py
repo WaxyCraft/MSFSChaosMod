@@ -25,6 +25,94 @@ events = [
           "Halve Altitude"
      ),
 
+     # ----- OPEN CANOPY -----
+     # Opens the plane canopy.
+     SimVarEvent(eh, 
+          "openCanopy", 
+          SimVarNotation("CANOPY_OPEN", 1),
+          "Open Canopy"
+     ),
+
+     # ----- RANDOM CAMERA -----
+     # Switches to a random camera state.
+     SimVarEvent(eh, 
+          "randomCamera", 
+          SimVarNotation("CAMERA_STATE", 2, Operation.RAN, 26),
+          "Random Camera"
+     ),  
+
+     # ----- STOP PLANE -----
+     # Sets airspeed to 0.
+     SimVarEvent(eh, 
+          "stopPlane", 
+          SimVarNotation("AIRSPEED_TRUE", 0),
+          "Stop Plane"
+     ),      
+
+     # ----- MAX SPEED -----
+     # Sets airspeed to 10000.
+     SimVarEvent(eh, 
+          "maxSpeed", 
+          SimVarNotation("AIRSPEED_TRUE", 10000),
+          "Max Plane"
+     ),  
+
+     # ----- DIVE -----
+     # Makes the plane face straight down.
+     SimVarEvent(eh, 
+          "dive", 
+          SimVarNotation("PLANE_PITCH_DEGREES", 2),
+          "Dive"
+     ),  
+
+     # ----- RIGHT AILERON -----
+     # Sets aileron position all the way to the right.
+     SimVarEvent(eh, 
+          "rightAileron", 
+          SimVarNotation("AILERON_POSITION", 16000),
+          "Right Aileron"
+     ),  
+
+     # ----- LEFT AILERON -----
+     # Sets aileron position all the way to the left.
+     SimVarEvent(eh, 
+          "leftAileron", 
+          SimVarNotation("AILERON_POSITION", -16000),
+          "Left Aileron"
+     ),  
+
+     # ----- MAX FLAPS -----
+     # Sets flaps to max position.
+     SimVarEvent(eh, 
+          "maxFlaps", 
+          SimVarNotation("FLAP_POSITION_SET", 5),
+          "Max Flaps"
+     ), 
+
+     # ----- RANDOM AILERON -----	
+     # Sets aileron position to a random value.
+     SimVarEvent(eh, 
+          "randomAileron", 
+          SimVarNotation("AILERON_POSITION", -16000, Operation.RAN, 16000),
+          "Random Aileron"
+     ),  
+
+     # ----- RANDOM ELEVATOR -----
+     # Sets elevator position to a random value.
+     SimVarEvent(eh, 
+          "randomElevator", 
+          SimVarNotation("ELEVATOR_POSITION", -16000, Operation.RAN, 16000),
+          "Random Elevator"
+     ), 
+
+     # ----- RANDOM RUDDER -----
+     # Sets Rudder position to a random value.
+     SimVarEvent(eh, 
+          "randomRudder", 
+          SimVarNotation("RUDDER_POSITION", -16000, Operation.RAN, 16000),
+          "Random Rudder"
+     ), 
+
 # ---------- SIM EVENT EVENTS ---------- #
 
 # https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
@@ -45,37 +133,58 @@ events = [
           "Shutdown Engine"
      ),
 
+     # ----- SHUTDOWN APU -----
+     # Shutdowns the auxiliary power unit
+     SimEventEvent(eh, 
+          "shutdownAPU", 
+          SimEventNotation("APU_OFF_SWITCH"),
+          "Shutdown APU"
+     )
+
 # ---------- SIM METHOD EVENTS ---------- #
 
 #https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_API_Reference.htm
 
-     # ----- GO EAST -----
-     # Changes the plane's longitude by -0.005.
-     SimMethodEvent(eh, 
-          "goEast", 
-          SimMethodNotation(
-               "set_pos",
-               SimMethodArgument(None, Operation.SET, "PLANE_ALTITUDE"),
-               SimMethodArgument(None, Operation.SET, "PLANE_LATITUDE"),
-               SimMethodArgument(-0.005, Operation.ADD, "PLANE_LONGITUDE"),
-               SimMethodArgument(None, Operation.INT, "AIRSPEED_TRUE")
-          ),
-          "Go East"
-     ),
+     # # ----- GO EAST -----
+     # # Changes the plane's longitude by -0.005.
+     # SimMethodEvent(eh, 
+     #      "goEast", 
+     #      SimMethodNotation(
+     #           "set_pos",
+     #           SimMethodArgument(None, Operation.SET, "PLANE_ALTITUDE"),
+     #           SimMethodArgument(None, Operation.SET, "PLANE_LATITUDE"),
+     #           SimMethodArgument(-0.005, Operation.ADD, "PLANE_LONGITUDE"),
+     #           SimMethodArgument(None, Operation.INT, "AIRSPEED_TRUE")
+     #      ),
+     #      "Go East"
+     # ),
 
-     # ----- GO WEST -----
-     # Changes the plane's longitude by 0.005.
-     SimMethodEvent(eh, 
-          "goWest", 
-          SimMethodNotation(
-               "set_pos",
-               SimMethodArgument(None, Operation.SET, "PLANE_ALTITUDE"),
-               SimMethodArgument(None, Operation.SET, "PLANE_LATITUDE"),
-               SimMethodArgument(0.005, Operation.ADD, "PLANE_LONGITUDE"),
-               SimMethodArgument(None, Operation.INT, "AIRSPEED_TRUE")
-          ),
-          "Go West"
-     )
+     # # ----- GO WEST -----
+     # # Changes the plane's longitude by 0.005.
+     # SimMethodEvent(eh, 
+     #      "goWest", 
+     #      SimMethodNotation(
+     #           "set_pos",
+     #           SimMethodArgument(None, Operation.SET, "PLANE_ALTITUDE"),
+     #           SimMethodArgument(None, Operation.SET, "PLANE_LATITUDE"),
+     #           SimMethodArgument(0.005, Operation.ADD, "PLANE_LONGITUDE"),
+     #           SimMethodArgument(None, Operation.INT, "AIRSPEED_TRUE")
+     #      ),
+     #      "Go West"
+     # )
 ]
 
 eh.addEvent(events)
+
+# TEST
+import time
+from yapper import Yapper
+
+yapper = Yapper()
+
+while True:
+     time.sleep(1)
+     x = eh.getRandomEvent()
+     yapper.yap(x)
+     print(x)
+     x.run()

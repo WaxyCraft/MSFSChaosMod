@@ -16,7 +16,8 @@ class Operation(Enum):
      MUL = 3 # Multiplies the modifyValue with the value.
      DIV = 4 # Divides the value by the modifyValue.
      EXP = 5 # Raises the value to the power of the modifyValue.
-     INT = 6 # Set the value to the integer of the modifyValue.
+     INT = 6 # Sets the value to the integer of the modifyValue.
+     RAN = 7 # Sets the value to a random integer beteen the value and the modifyValue
 
 # All events run through an instance of the EventHandler.
 class EventHandler:
@@ -154,6 +155,8 @@ class SimVarEvent(Event):
                          valToSet = value ** modifyValue
                     case Operation.INT:
                          valToSet = int(modifyValue)
+                    case Operation.RAN:
+                         valToSet = random.randrange(value, modifyValue)
                     
           self._aq.set(setVar, valToSet)
 
@@ -274,8 +277,8 @@ class SimMethodEvent(Event):
                          outValue = argValue / modifyValue
                     case Operation.EXP:
                          outValue = argValue ** modifyValue
-                    case Operation.INT:
-                         outValue = int(modifyValue)
+                    case Operation.RAN:
+                         outValue = random.randrange(argValue, modifyValue)
 
           return outValue
 
