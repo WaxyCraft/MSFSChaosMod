@@ -113,6 +113,38 @@ events = [
           "Random Rudder"
      ), 
 
+     # ----- FLEXY WINGS -----
+     # Sets wing flex to max.
+     SimVarEvent(eh, 
+          "flexyWings", 
+          [SimVarNotation("WING_FLEX_PCT:1", 1), SimVarNotation("WING_FLEX_PCT:2", 1)],
+          "Flexy Wings"
+     ), 
+
+     # ----- SLEW -----
+     # Enables slew mode.
+     SimVarEvent(eh, 
+          "slewMode", 
+          SimVarNotation("IS_SLEW_ACTIVE", True),
+          "Slew Mode"
+     ),
+
+     # ----- NEGATIVE SPEED -----
+     # Sets airspeed to -10000.
+     SimVarEvent(eh, 
+          "negativeSpeed", 
+          SimVarNotation("AIRSPEED_TRUE", -10000),
+          "Negative Speed"
+     ),  
+
+     # ----- TURN OFF CABIN LIGHT -----
+     # Turns off the cabin light.
+     SimVarEvent(eh, 
+          "turnOffCabinLight", 
+          SimVarNotation("LIGHT_CABIN", False),
+          "Turn Off Cabin Light"
+     ),  
+
 # ---------- SIM EVENT EVENTS ---------- #
 
 # https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
