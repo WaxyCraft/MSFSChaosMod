@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from eventBackend import *
-import pyautogui
+from PIL import ImageGrab
 import win32gui
 
 class Overlay:
@@ -20,11 +20,8 @@ class Overlay:
           self._root.lift()
           self._root.wm_attributes("-topmost", True)
 
-     # Corrects position of overlay.
-     def _updatePosition(self) -> None:
+     def _getNewPosition(self, width, height) -> tuple:
           # Corrects position of overlay on window.
-          overlayWidth = self._root.winfo_width()
-          overlayHeight = self._root.winfo_height()
           wOffset = self._fracLocationOffset[0]
           hOffset = self._fracLocationOffset[1]
 
@@ -35,14 +32,25 @@ class Overlay:
           h = windowRect[3] - y
 
           # Offsets the overlay and corrects for the overlay's own height.
-          overlayX = int(w * wOffset - (overlayWidth // 4))
-          overlayY = int(h * hOffset - (overlayHeight // 4))
+          overlayX = x + max(int(w * wOffset - (width // 4)), 0)
+          overlayY = y + max(int(h * hOffset - (height // 4)), 0)
+          
+          return overlayX, overlayY
 
-          self._root.geometry(str(overlayWidth) + "x" + str(overlayHeight) + "+" + str(x + max(overlayX, 0)) + "+" + str(y + max(overlayY, 0)))
-          self._root.after(self._updateDelay, self._updatePosition)
+     # Corrects position of overlay.
+     def _updatePosition(self) -> None:
+          overlayWidth = self._root.winfo_width()
+          overlayHeight = self._root.winfo_height()
+          overlayX, overlayY = self._getNewPosition(overlayWidth, overlayHeight)
+
+          self._root.geometry(str(overlayWidth) + "x" + str(overlayHeight) + "+" + str(overlayX) + "+" + str(overlayY))
+
+     def _loop(self) -> None:
+          self._updatePosition()
+          self._root.after(self._updateDelay, self._loop)
           
      def run(self) -> None:
-          self._root.after(self._updateDelay, self._updatePosition)
+          self._root.after(self._updateDelay, self._loop())
           self._root.mainloop()
 
      def exit(self) -> None:
@@ -52,6 +60,7 @@ class EventOverlay(Overlay):
      def __init__(self, updateDelay: int, overlayWindow: str, initialEvent: str, fracLocationOffset: tuple[float, float] = (0, 0), size: int = (0, 0)):
           super().__init__(updateDelay, overlayWindow, fracLocationOffset, size)
           self._event = initialEvent
+          self._textAntiAliasColor = None
 
           eventLabel = tk.Label(self._root, text = str(initialEvent), font = ('Impact', 20), fg = "white", bg = "white")
           eventLabel.pack()
@@ -59,10 +68,36 @@ class EventOverlay(Overlay):
 
           self._root.config(bg = '')
 
-     def _getTextAntiAliasingColor(self) -> str:
-          x, y = 100, 100  # Replace with pixel coordinates
-          color = pyautogui.pixel(x, y)
-          print(f"RGB color at ({x}, {y}): {color}")
+     def _loop(self) -> None:
+          self._updatePosition()
+          self._correctTestAntiAliasing()
+          self._root.after(self._updateDelay, self._loop)
 
-x = EventOverlay(10, "MoodLight - Free Online Strobe/Disco/Party/Mood Light - Google Chrome", Event("dummyEvent", "Dummy Event"), (0, 0.5))
+     def _correctTestAntiAliasing(self) -> tuple:
+          overlayWidth = self._root.winfo_width()
+          overlayHeight = self._root.winfo_height()
+          x, y = self._getNewPosition(overlayWidth, overlayHeight)
+
+          px = ImageGrab.grab().load()
+          color = px[-x, y]
+
+          if self._textAntiAliasColor:
+               r = int((color[0] + self._textAntiAliasColor[0]) / 2)
+               g = int((color[1] + self._textAntiAliasColor[1]) / 2)
+               b = int((color[2] + self._textAntiAliasColor[2]) / 2)
+
+               color = (r, g, b)
+
+          self._textAntiAliasColor = color
+
+          color = "#%02x%02x%02x" % color
+          self.text.config(bg = color)
+          self._root.wm_attributes("-transparentcolor", color)
+
+     
+
+          
+
+# x = EventOverlay(10, "MoodLight - Free Online Strobe/Disco/Party/Mood Light - Google Chrome", Event("dummyEvent", "Dummy Event"), (0, 0.5))
+x = EventOverlay(10, "Microsoft Flight Simulator 2024 - 1.2.11.0", Event("dummyEvent", "Dummy Event"), (0, 0.5))
 x.run()
