@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from eventBackend import *
-from PIL import ImageGrab
+import mss.tools
 import win32gui
 
 class Overlay:
@@ -65,39 +65,12 @@ class EventOverlay(Overlay):
           eventLabel = tk.Label(self._root, text = str(initialEvent), font = ('Impact', 20), fg = "white", bg = "white")
           eventLabel.pack()
           self.text = eventLabel
+          self._root.attributes('-alpha', 0.8)
+
 
           self._root.config(bg = '')
-
-     def _loop(self) -> None:
-          self._updatePosition()
-          self._correctTestAntiAliasing()
-          self._root.after(self._updateDelay, self._loop)
-
-     def _correctTestAntiAliasing(self) -> tuple:
-          overlayWidth = self._root.winfo_width()
-          overlayHeight = self._root.winfo_height()
-          x, y = self._getNewPosition(overlayWidth, overlayHeight)
-
-          px = ImageGrab.grab().load()
-          color = px[-x, y]
-
-          if self._textAntiAliasColor:
-               r = int((color[0] + self._textAntiAliasColor[0]) / 2)
-               g = int((color[1] + self._textAntiAliasColor[1]) / 2)
-               b = int((color[2] + self._textAntiAliasColor[2]) / 2)
-
-               color = (r, g, b)
-
-          self._textAntiAliasColor = color
-
-          color = "#%02x%02x%02x" % color
-          self.text.config(bg = color)
-          self._root.wm_attributes("-transparentcolor", color)
-
-     
-
-          
+    
 
 # x = EventOverlay(10, "MoodLight - Free Online Strobe/Disco/Party/Mood Light - Google Chrome", Event("dummyEvent", "Dummy Event"), (0, 0.5))
-x = EventOverlay(10, "Microsoft Flight Simulator 2024 - 1.2.11.0", Event("dummyEvent", "Dummy Event"), (0, 0.5))
+x = EventOverlay(10, "New Tab - Google Chrome", Event("dummyEvent", "Dummy Event"), (0, 0.5))
 x.run()
