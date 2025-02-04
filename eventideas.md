@@ -1,5 +1,7 @@
 ### Event Ideas
 
+## Sim Var Events
+
 * Black Out
 * Drink Water
 * Math Quiz
@@ -48,3 +50,15 @@
 * Turn Off Cabin Light ☐
 * Fail All Panels
 * Lock Yoke
+
+## Sim Event Events
+
+* Toggle all lights
+* Brakes
+* No Smoking
+* Close View
+* Flight Map
+* Toggle Fuel Pump
+* No G Limiter
+* Clear GPS
+* 
