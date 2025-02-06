@@ -50,20 +50,30 @@ class EventOverlay(Overlay):
 
           super().__init__(updateDelay, overlayWindow, locationOffsetX, locationOffsetY)
 
+          self.setGeometry(300, 300, 280, 170) 
+
+
           self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
+     # Initiates the eventLabel and progressBar. 
      def _addContent(self) -> None:
           layout = QVBoxLayout()
           
-          eventLabel = QLabel(str(self._event))
+          self._eventLabel = QLabel(str(self._event))
+          self._eventLabel.setAlignment(QtCore.Qt.AlignCenter)
 
-          layout.addWidget(eventLabel)
+          self._progressBar = QProgressBar()
+          self._progressBar.setAlignment(QtCore.Qt.AlignCenter)
+          self._progressBar.setValue(50)
+
+          layout.addWidget(self._eventLabel)
+          layout.addWidget(self._progressBar)
           widget = QWidget()
           widget.setLayout(layout)
           self.setCentralWidget(widget)
 
 app = QApplication(sys.argv)
-m = EventOverlay(10, "New Tab - Google Chrome", Event("Dummy Event"), 0.5, 1)
+m = EventOverlay(1, "New Tab - Google Chrome", Event("Dummy Event"), 0, 0.5)
 m.show()
 
 app.exec()
