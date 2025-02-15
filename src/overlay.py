@@ -1,13 +1,14 @@
 from eventBackend import Event
 from PyQt5.QtWidgets import QVBoxLayout, QWidget, QApplication, QMainWindow, QProgressBar, QLabel
+from PyQt5.QtGui import QFont
 from PyQt5 import QtCore
 import sys
 import win32gui
 
 class Overlay(QMainWindow):
-     def __init__(self, updateDelay: int ,overlayWindow: str, locationOffsetX: float = 0, locationOffsetY: float = 0) -> None:
+     def __init__(self, updateDelayMs: int, overlayWindow: str, locationOffsetX: float = 0, locationOffsetY: float = 0) -> None:
           super().__init__()          
-          self._updateDelay = updateDelay
+          self._updateDelayMs = updateDelayMs
           self._overlayWindow = win32gui.FindWindow(None, overlayWindow)
           self._locationOffsetX = locationOffsetX
           self._locationOffsetY = locationOffsetY
@@ -16,7 +17,12 @@ class Overlay(QMainWindow):
           self.setWindowTitle("MSFSChoasMod")
 
           self._addContent()
-          self._updatePosition()
+
+          self._timer = QtCore.QTimer()
+          self._timer.timeout.connect(self._loop)
+          self._timer.start(self._updateDelayMs)
+
+          self.show()
 
      # Adds content to Overlay. Should be overridden by child classes.
      def _addContent(self) -> None:
@@ -42,16 +48,20 @@ class Overlay(QMainWindow):
 
           self.move(overlayX, overlayY)
 
-          QtCore.QTimer.singleShot(self._updateDelay, self._updatePosition)
+     # Main window loop.
+     def _loop(self) -> None:
+          self._updatePosition()
 
+# TODO: Multithread EventOverlay
 class EventOverlay(Overlay):
-     def __init__(self, updateDelay: int, overlayWindow: str, initialEvent: Event, locationOffsetX: float = 0, locationOffsetY: float = 0) -> None:
+     def __init__(self, updateDelayMs: int, overlayWindow: str, initialEvent: Event, initialEventTimeMs: int = 1000, locationOffsetX: float = 0, locationOffsetY: float = 0) -> None:
           self._event = initialEvent
+          self._eventTimeMs = initialEventTimeMs
+          self._eventTimeProgressMs = 100.0
 
-          super().__init__(updateDelay, overlayWindow, locationOffsetX, locationOffsetY)
+          super().__init__(updateDelayMs, overlayWindow, locationOffsetX, locationOffsetY)
 
-          self.setGeometry(300, 300, 280, 170) 
-
+          self.setGeometry(300, 300, 280, 50) 
 
           self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
@@ -59,12 +69,16 @@ class EventOverlay(Overlay):
      def _addContent(self) -> None:
           layout = QVBoxLayout()
           
-          self._eventLabel = QLabel(str(self._event))
+          self._eventLabel = QLabel(self._event.displayName)
           self._eventLabel.setAlignment(QtCore.Qt.AlignCenter)
+          self._eventLabel.setFont(QFont('Impact', 18)) 
+          self._eventLabel.setStyleSheet("color: white;")
 
           self._progressBar = QProgressBar()
           self._progressBar.setAlignment(QtCore.Qt.AlignCenter)
+          self._progressBar.setTextVisible(False)
           self._progressBar.setValue(50)
+          self._progressBar.setStyleSheet("QProgressBar::chunk {background-color: LimeGreen;}")
 
           layout.addWidget(self._eventLabel)
           layout.addWidget(self._progressBar)
@@ -72,8 +86,28 @@ class EventOverlay(Overlay):
           widget.setLayout(layout)
           self.setCentralWidget(widget)
 
-app = QApplication(sys.argv)
-m = EventOverlay(1, "New Tab - Google Chrome", Event("Dummy Event"), 0, 0.5)
-m.show()
+     # Sets eventLabel text to the event name and resets the progress bar.
+     def setEvent(self, event: Event, timeMs: int) -> None:
+          self._event = event
+          self._eventLabel.setText(self._event.displayName)
+          self._progressValue = 100.0
 
-app.exec()
+     # Overrides loop method to also decrement progress bar.
+     def _loop(self) -> None:
+          self._updatePosition()
+
+          if self._eventTimeProgressMs > 0:
+               self._eventTimeProgressMs -= 100.0 / self._eventTimeMs * self._updateDelayMs
+               self._progressBar.setValue(round(self._eventTimeProgressMs))
+               self._progressBar.update()
+          elif self._event:
+               self._event.run()
+               self._event = None
+          
+     @property
+     def progressValue(self) -> int:
+          return self._progressBar.value()
+     
+     @progressValue.setter
+     def progressValue(self, value: int) -> None:
+          self._progressBar.setValue(value)
