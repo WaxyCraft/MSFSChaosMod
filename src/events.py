@@ -25,21 +25,21 @@ events = [
           "Halve Altitude"
      ),
 
-     # ----- OPEN CANOPY -----
-     # Opens the plane canopy.
-     SimVarEvent(eh, 
-          "openCanopy", 
-          SimVarNotation("CANOPY_OPEN", 1),
-          "Open Canopy"
-     ),
+     # # ----- OPEN CANOPY ----- SEEMS TO NOT WORK IN 2024
+     # # Opens the plane canopy.
+     # SimVarEvent(eh, 
+     #      "openCanopy", 
+     #      SimVarNotation("CANOPY_OPEN", 1.0),
+     #      "Open Canopy"
+     # ),
 
-     # ----- RANDOM CAMERA -----
-     # Switches to a random camera state.
-     SimVarEvent(eh, 
-          "randomCamera", 
-          SimVarNotation("CAMERA_STATE", 2, Operation.RAN, 26),
-          "Random Camera"
-     ),  
+     # # ----- RANDOM CAMERA ----- SEEMS TO NOT BE SUPPORTED BY SIMCONNECT PYTHON
+     # # Switches to a random camera state.
+     # SimVarEvent(eh, 
+     #      "randomCamera", 
+     #      SimVarNotation("CAMERA_STATE", 2, Operation.RAN, 8),
+     #      "Random Camera"
+     # ),  
 
      # ----- STOP PLANE -----
      # Sets airspeed to 0.
@@ -53,7 +53,7 @@ events = [
      # Sets airspeed to 10000.
      SimVarEvent(eh, 
           "maxSpeed", 
-          SimVarNotation("AIRSPEED_TRUE", 10000),
+          SimVarNotation("AIRSPEED_TRUE", 1000),
           "Max Plane"
      ),  
 
@@ -207,16 +207,3 @@ events = [
 ]
 
 eh.addEvent(events)
-
-# TEST
-import time
-from yapper import Yapper
-
-yapper = Yapper()
-
-while True:
-     time.sleep(1)
-     x = eh.getRandomEvent()
-     yapper.yap(x)
-     print(x)
-     x.run()
