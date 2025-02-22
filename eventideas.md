@@ -1,23 +1,26 @@
 ### Event Ideas
 
+## Sim Var Events
+
 * Black Out
 * Drink Water
 * Math Quiz
-* Turn Off APU
+* Turn Off APU ☐
 * Red Out
 * No GPS
 * Circuit Breaker
-* Random Camera
+* Random Camera ☐
 * No Realism
 * Jetstream
 * Stall Speed
-* Toggle Landing Gear
-* Right Ailerons
-* Left Ailerons
+* Toggle Landing Gear ☑
+* Right Ailerons ☐
+* Left Ailerons ☐
 * Random Trim
-* Random Elevator & Ailerons
-* Max Flaps
-* Random Rudder
+* Random Elevator ☐
+* Random Ailerons ☐
+* Max Flaps ☐
+* Random Rudder ☐
 * Extend Spoilers
 * Prime Engine
 * Light Engine on Fire
@@ -31,19 +34,31 @@
 * Random Fuel Tank
 * 5G
 * 100G
-* Super Flexible Wings
-* Slew
+* Super Flexible Wings ☐
+* Slew ☐
 * 10ft Above Ground
 * Uncontrollable Spinning
 * 15 Second Unskippable Ad
 * Random IQ Test Question
-* Negative Air Speed
+* Negative Air Speed ☐
 * Random ATC Airline
 * Random ATC ID
 * Toggle Auto-coordination
-* Open Canopy
+* Open Canopy ☐
 * Random Indicated Altitude
-* Turn On Smoke
-* Turn Off Cabin Light
+* Turn On Smoke 
+* Turn Off Cabin Light ☐
 * Fail All Panels
 * Lock Yoke
+
+## Sim Event Events
+
+* Toggle all lights
+* Brakes
+* No Smoking
+* Close View
+* Flight Map
+* Toggle Fuel Pump
+* No G Limiter
+* Clear GPS
+* 
