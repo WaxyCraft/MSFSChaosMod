@@ -1,8 +1,7 @@
 from eventBackend import Event, EventHandler
-from PyQt5.QtWidgets import QVBoxLayout, QWidget, QApplication, QMainWindow, QProgressBar, QLabel, QPushButton, QListWidget, QListWidgetItem
+from PyQt5.QtWidgets import QVBoxLayout, QWidget, QMainWindow, QProgressBar, QLabel, QPushButton, QListWidget, QListWidgetItem
 from PyQt5.QtGui import QFont
 from PyQt5 import QtCore
-import sys
 import win32gui
 
 class Overlay(QMainWindow):
