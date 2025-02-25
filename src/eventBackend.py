@@ -28,6 +28,7 @@ class EventHandler:
           self._sm = SimConnect()
           self._aq = AircraftRequests(self._sm, requestTime)
           self._ae = AircraftEvents(self._sm)
+          self._eventHistory = []
           self._events = []
           
      # Must exit at end of program to properly run events. If the program runs on an infinite loop this is not required.
@@ -41,9 +42,26 @@ class EventHandler:
           else:
                self._events.append(event)
 
+     # Method to conclude the last event, triggering the events recall method.
+     def concludeLastEvent(self) -> Event:
+          lastEvent = self._eventHistory[-1]
+          lastEvent.recall()
+
      # Returns random event from the EventHandler's list of events.
      def getRandomEvent(self) -> Event:
           return random.choice(self._events)
+     
+     # Picks a random event and runs it, adding it to the eventHistory.
+     def runRandomEvent(self) -> Event:
+          event = self.getRandomEvent()
+          self.runEvent(self)
+          return event
+     
+     # Runs event and appends it to the eventHistory.
+     def runEvent(self, event) -> Event:
+          self.concludeLastEvent()
+          event.run()
+          self._eventHistory.append(event)
 
      @property
      def sm(self) -> SimConnect:
@@ -60,6 +78,10 @@ class EventHandler:
      @property
      def events(self) -> list[Event]:
           return self._events
+     
+     @property
+     def eventHistory(self) -> list[Event]:
+          return self._eventHistory
 
 # Base Event class.
 class Event(ABC):
@@ -98,6 +120,11 @@ class Event(ABC):
 
      @abstractmethod
      def run(self) -> None:
+          pass
+
+     # Method that is called once an event concludes (IE: The next event starts). 
+     @abstractmethod
+     def recall(self) -> None:
           pass
      
      @property
@@ -145,12 +172,14 @@ class SimVarNotation:
 
 # Class for events that modify Simulation Variables. SimVars Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm
 class SimVarEvent(Event):
-     def __init__(self, eventHandler: EventHandler, name: str, commands: SimVarNotation | list[SimVarNotation], displayName: str = None, description: str = None) -> None:
+     def __init__(self, eventHandler: EventHandler, name: str, commands: SimVarNotation | list[SimVarNotation], displayName: str = None, description: str = None, resetAfterEvent: bool = False) -> None:
           super().__init__(name, displayName, description)
           self._eventType = EventType.SIM_VAR
           self._sm = eventHandler.sm
           self._aq = eventHandler.aq
           self._commands = commands
+          self._resetAfterEvent = resetAfterEvent
+          self._resetValues = []
 
      # Run command from SimVarNotation object.
      def _evalCommand(self, command: SimVarNotation) -> None:
@@ -164,6 +193,9 @@ class SimVarEvent(Event):
                modifyValue = self._aq.get(modifyValue)
           if type(value) == str:
                value = self._aq.get(value)
+
+          if self._resetAfterEvent:
+               self._resetValues.append(SimVarNotation(setVar, None, Operation.SET, value))
                     
           self._aq.set(setVar, self._evalModifier(value, operation, modifyValue))
 
@@ -173,6 +205,11 @@ class SimVarEvent(Event):
                     self._evalCommand(command)
           else:
                self._evalCommand(self._commands)
+
+     def recall(self) -> None:
+          self._resetAfterEvent = False
+          for resetValue in self._resetValues:
+               self._evalCommand(resetValue)
 
 # Container for SimEvents.
 class SimEventNotation:
