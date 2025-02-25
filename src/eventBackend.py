@@ -1,4 +1,5 @@
 from SimConnect import *
+from abc import ABC, abstractmethod
 from enum import Enum
 import random
 
@@ -7,7 +8,7 @@ class EventType(Enum):
      SIM_VAR = 1    # Used for the SimVarEvent class. These events modify Simulation Variables. SimVars Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimVars/Simulation_Variables.htm
      SIM_EVENT = 2  # Used for the SimEventEvent class. These events trigger Simulation Events. Event IDs Docs: https://docs.flightsimulator.com/html/Programming_Tools/Event_IDs/Event_IDs.htm
      SIM_METHOD = 3 # Used for SimMethodEvent class. These events trigger various other methods built into SimConnect. SimConnect API Docs: https://docs.flightsimulator.com/html/Programming_Tools/SimConnect/SimConnect_API_Reference.htm
-     CUSTOM = 4     # Used for all classes that begin with Custom. These events allow for arbitrary code to be used for more complicated events.
+     CUSTOM = 4     # Used for all custom classes. These events allow for arbitrary code to be used for more complicated events.
 
 class Operation(Enum):
      SET = 0 # Sets the value to the modifyValue.
@@ -16,7 +17,10 @@ class Operation(Enum):
      MUL = 3 # Multiplies the modifyValue with the value.
      DIV = 4 # Divides the value by the modifyValue.
      EXP = 5 # Raises the value to the power of the modifyValue.
-     INT = 6 # Set the value to the integer of the modifyValue.
+     MOD = 6 # Modulos the value by the modifyValue.
+     INT = 7 # Sets the value to the integer of the modifyValue.
+     RAN = 8 # Sets the value to a random integer beteen the value and the modifyValue.
+     RFL = 9 # Sets the value to a random float beteen the value and the modifyValue.
 
 # All events run through an instance of the EventHandler.
 class EventHandler:
@@ -26,17 +30,18 @@ class EventHandler:
           self._ae = AircraftEvents(self._sm)
           self._events = []
           
-     # Must exit at end of program to properly run events.
-     def exit(self):
+     # Must exit at end of program to properly run events. If the program runs on an infinite loop this is not required.
+     def exit(self) -> None:
           self._sm.exit()
 
      # Adds events to the EventHandler's list of events.
-     def addEvent(self, event: Event | list[Event]):
+     def addEvent(self, event: Event | list[Event]) -> None:
           if type(event) == list:
                self._events.extend(event)
           else:
                self._events.append(event)
 
+     # Returns random event from the EventHandler's list of events.
      def getRandomEvent(self) -> Event:
           return random.choice(self._events)
 
@@ -45,19 +50,19 @@ class EventHandler:
           return self._sm
      
      @property
-     def aq(self):
+     def aq(self) -> AircraftRequests:
           return self._aq
      
      @property
-     def ae(self):
+     def ae(self) -> AircraftEvents:
           return self._ae
      
      @property
-     def events(self):
+     def events(self) -> list[Event]:
           return self._events
 
 # Base Event class.
-class Event:
+class Event(ABC):
      def __init__(self, name: str, displayName: str = None, description: str = None) -> None:
           self._name = name
           self._description = description
@@ -69,7 +74,7 @@ class Event:
                self._displayName = name
 
      # Evaluates a value with a operation and modifyValue.
-     def _evalModifier(self, value: int | float, operation: Operation, modifyValue: int | float):     
+     def _evalModifier(self, value: int | float, operation: Operation, modifyValue: int | float) -> int | float:     
           out = value
 
           if operation and modifyValue:
@@ -91,7 +96,8 @@ class Event:
 
           return out
 
-     def run(self):
+     @abstractmethod
+     def run(self) -> None:
           pass
      
      @property
@@ -147,7 +153,7 @@ class SimVarEvent(Event):
           self._commands = commands
 
      # Run command from SimVarNotation object.
-     def _evalCommand(self, command: SimVarNotation):
+     def _evalCommand(self, command: SimVarNotation) -> None:
           setVar = command.setVar
           value = command.value
           operation = command.operation
@@ -161,15 +167,12 @@ class SimVarEvent(Event):
                     
           self._aq.set(setVar, self._evalModifier(value, operation, modifyValue))
 
-     def run(self):
-          if type(self._commands) == SimVarNotation:
-               return self._evalCommand(self._commands)
-          else:
+     def run(self) -> None:
+          if type(self._commands) is list:
                for command in self._commands:
-                    if command == self._commands[-1]:
-                         return self._evalCommand(command)
-                    else:
-                         self._evalCommand(command)
+                    self._evalCommand(command)
+          else:
+               self._evalCommand(self._commands)
 
 # Container for SimEvents.
 class SimEventNotation:
@@ -195,21 +198,16 @@ class SimEventEvent(Event):
           self._events = events
 
      # Triggers the SimEvent.
-     def _triggerSimEvent(self, event: SimEventNotation):
+     def _triggerSimEvent(self, event: SimEventNotation) -> None:
           toTrigger = self._ae.find(event.event)
           toTrigger(*event.args)
-
           
-     def run(self):
-          if type(self._events) == SimEventNotation:
-               return self._triggerSimEvent(self._events)
-
-          else:
+     def run(self) -> None:
+          if type(self._events) is list:
                for event in self._events:
-                    if event == self._events[-1]:
-                         return self._triggerSimEvent(event)
-                    else:
-                         self._triggerSimEvent(event)
+                    self._triggerSimEvent(event)
+          else:
+               self._triggerSimEvent(self._events)
 
 # Container for arguments for SimMethod.
 class SimMethodArgument:
@@ -254,7 +252,7 @@ class SimMethodEvent(Event):
           self._methods = methods
 
      # Calculates the value of a SimMethodArgument.
-     def _evalArgument(self, arg: SimMethodArgument) -> any:
+     def _evalArgument(self, arg: SimMethodArgument) -> int | float:
           argValue = arg.argValue
           modifyValue = arg.modifyValue
           operation = arg.operation
@@ -273,16 +271,13 @@ class SimMethodEvent(Event):
           return tuple(out)
 
      # Calls the SimMethod.
-     def _callSimMethod(self, method: SimMethodNotation):
+     def _callSimMethod(self, method: SimMethodNotation) -> None:
           toCall = getattr(self._sm, method.method)
           toCall(*self._convertArgumentsToValues(method.args))
 
-     def run(self): 
-          if type(self._methods) == SimMethodNotation:
-               return self._callSimMethod(self._methods)
-          else:
+     def run(self) -> None: 
+          if type(self._methods) is list:
                for method in self._methods:
-                    if method == self._methods[-1]:
-                         return self._callSimMethod(method)
-                    else:
-                         self._callSimMethod(method)
+                    self._callSimMethod(method)
+          else:
+               self._callSimMethod(self._methods)
