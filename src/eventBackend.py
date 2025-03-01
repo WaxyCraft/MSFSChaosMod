@@ -1,5 +1,4 @@
 from SimConnect import *
-from abc import ABC, abstractmethod
 from enum import Enum
 import random
 
@@ -43,9 +42,10 @@ class EventHandler:
                self._events.append(event)
 
      # Method to conclude the last event, triggering the events recall method.
-     def concludeLastEvent(self) -> Event:
-          lastEvent = self._eventHistory[-1]
-          lastEvent.recall()
+     def concludeLastEvent(self) -> None:
+          if len(self._eventHistory) > 0:
+               lastEvent = self._eventHistory[-1]
+               lastEvent.recall()
 
      # Returns random event from the EventHandler's list of events.
      def getRandomEvent(self) -> Event:
@@ -58,7 +58,7 @@ class EventHandler:
           return event
      
      # Runs event and appends it to the eventHistory.
-     def runEvent(self, event) -> Event:
+     def runEvent(self, event: Event) -> None:
           self.concludeLastEvent()
           event.run()
           self._eventHistory.append(event)
@@ -84,7 +84,7 @@ class EventHandler:
           return self._eventHistory
 
 # Base Event class.
-class Event(ABC):
+class Event():
      def __init__(self, name: str, displayName: str = None, description: str = None) -> None:
           self._name = name
           self._description = description
@@ -118,12 +118,10 @@ class Event(ABC):
 
           return out
 
-     @abstractmethod
      def run(self) -> None:
           pass
 
      # Method that is called once an event concludes (IE: The next event starts). 
-     @abstractmethod
      def recall(self) -> None:
           pass
      
