@@ -113,8 +113,14 @@ class Event():
                          out = value / modifyValue
                     case Operation.EXP:
                          out = value ** modifyValue
+                    case Operation.MOD:
+                         out = value % modifyValue
                     case Operation.INT:
                          out = int(modifyValue)
+                    case Operation.RAN:
+                         out = random.randrange(value, modifyValue)
+                    case Operation.RFL:
+                         out = random.uniform(value, modifyValue)
 
           return out
 
