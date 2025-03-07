@@ -1,4 +1,5 @@
 from eventBackend import *
+from customEvents import *
 
 eh = EventHandler()
 
@@ -166,12 +167,12 @@ events = [
      ),
 
      # ----- SHUTDOWN APU -----
-     # Shutdowns the auxiliary power unit
+     # Shutdowns the auxiliary power unit.
      SimEventEvent(eh, 
           "shutdownAPU", 
           SimEventNotation("APU_OFF_SWITCH"),
           "Shutdown APU"
-     )
+     ),
 
 # ---------- SIM METHOD EVENTS ---------- #
 
@@ -204,6 +205,15 @@ events = [
      #      ),
      #      "Go West"
      # )
+
+# ---------- CUSTOM EVENTS ---------- #
+
+     # ----- GO TO FRANCE -----
+     # Teleports the player to Paris.
+     GoToFrance(eh, 
+          "goToFrance", 
+          "Go To France"
+     )
 ]
 
 eh.addEvent(events)
