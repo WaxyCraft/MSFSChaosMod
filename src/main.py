@@ -1,16 +1,12 @@
-from olderverlay import *
-from eventBackend import EventManager
+from eventBackend import EventHandler, Event
+from PyQt5.QtWidgets import QApplication
+from events import events
+from overlay import EventOverlay
+import sys
 
-hud = EventHUD(1, "Microsoft Flight Simulator - 1.37.19.0", "Text Goes Here", (0, 0.5))
-manager = EventManager()
+eh = EventHandler()
+eh.addEvent(events)
+app = QApplication(sys.argv)
 
-# Temporary code that I will fix later
-def nothing():
-     pass
-
-def newEvent():
-     event = manager.getRandomEvent()
-     hud.setEvent(20, "NEXT EVENT: " + event[0], event[1], newEvent)
-
-hud.setEvent(90, "Grace Period", nothing, newEvent)
-hud.run()
+eventOverlay = EventOverlay(1, "Microsoft Flight Simulator 2024 - 1.3.25.0", eh, Event("gracePeriod", "Grace Period"), 60000, 15000, 0, 0.5) # TODO: Use Regex and pyWinAuto to automatically find game window.
+app.exec()

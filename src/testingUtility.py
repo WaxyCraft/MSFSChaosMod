@@ -8,5 +8,5 @@ eh = EventHandler()
 eh.addEvent(events)
 app = QApplication(sys.argv)
 
-utility = EventTestingUtility(1, "Microsoft Flight Simulator 2024 - 1.2.11.0", eh)
+utility = EventTestingUtility(1, "Microsoft Flight Simulator 2024 - 1.3.25.0", eh)
 app.exec()

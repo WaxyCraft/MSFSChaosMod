@@ -53,9 +53,11 @@ class Overlay(QMainWindow):
 
 # TODO: Multithread EventOverlay
 class EventOverlay(Overlay):
-     def __init__(self, updateDelayMs: int, overlayWindow: str, initialEvent: Event, initialEventTimeMs: int = 1000, locationOffsetX: float = 0, locationOffsetY: float = 0) -> None:
+     def __init__(self, updateDelayMs: int, overlayWindow: str, eventHandler: EventHandler, initialEvent: Event, initialEventTimeMs: int = 15000, futureEventTimeMs: int = 15000, locationOffsetX: float = 0, locationOffsetY: float = 0) -> None:
+          self._eh = eventHandler
           self._event = initialEvent
           self._eventTimeMs = initialEventTimeMs
+          self._constantEventTimeMs = futureEventTimeMs
           self._eventTimeProgressMs = 100.0
 
           super().__init__(updateDelayMs, overlayWindow, locationOffsetX, locationOffsetY)
@@ -89,7 +91,8 @@ class EventOverlay(Overlay):
      def setEvent(self, event: Event, timeMs: int) -> None:
           self._event = event
           self._eventLabel.setText(self._event.displayName)
-          self._progressValue = 100.0
+          self._eventTimeProgressMs = 100.0
+          self._eventTimeMs = timeMs
 
      # Overrides loop method to also decrement progress bar.
      def _loop(self) -> None:
@@ -100,9 +103,8 @@ class EventOverlay(Overlay):
                self._progressBar.setValue(round(self._eventTimeProgressMs))
                self._progressBar.update()
           elif self._event:
-               self._event.run()
-               self._event = None
-          
+               self._eh.runEvent(self._event)
+               self.setEvent(self._eh.getRandomEvent(), self._constantEventTimeMs)       
      @property
      def progressValue(self) -> int:
           return self._progressBar.value()
