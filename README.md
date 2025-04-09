@@ -14,7 +14,7 @@ MSFS Choas Mod is a Python program that runs on top of Microsoft Flight Simulato
 
 ### Window Overlay
 
-A graphical overlay is displayed over the game that shows the next event and how it until it trigger. The overlay  is bound to the game window and moves with it. This way the overlay is effectivly part of the game window.
+A graphical overlay is displayed over the game that shows the next event and how long until it triggers. The overlay  is bound to the game window and moves with it. This way the overlay is effectivly part of the game window.
 
 <p align="center">
     <img src="https://github.com/WaxyCraft/MSFSChaosMod/blob/main/assets/samples/overlay.gif" alt="GIF of Overlay"/>
@@ -24,7 +24,7 @@ A graphical overlay is displayed over the game that shows the next event and how
 
 ### Events
 
-There are currently 18+ events implementd in the mod, and more to come. Current the focus is on polishing the mod but after that is complete many more events will come.
+There are currently 18+ events implementd in the mod, and more to come. Currently the focus is on polishing the mod but after that is complete many more events will be made.
 
 <p align="center">
     <img src="https://github.com/WaxyCraft/MSFSChaosMod/blob/main/assets/samples/dive.gif" alt="GIF of Dive Event"/>
@@ -46,7 +46,7 @@ Though initially meant for just testing new events, the Event Testing Utility ca
 
 ### Installation
 
-Python is required to use the mod. If you do not already have Python installed it can be downloaded from [here](https://www.python.org/downloads/). Once Python is installed you need to download/clone this repository. Then navigate to the repository's directory in terminal and run the following command:
+Python is required to use the mod. If you do not already have Python installed it can be downloaded from [here](https://www.python.org/downloads/). Once Python is installed you need to download/clone this repository, then navigate to the repository's directory in terminal and run the following command:
 
 ```
 pip install -r requirements.txt
