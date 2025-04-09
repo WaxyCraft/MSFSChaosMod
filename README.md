@@ -24,7 +24,7 @@ A graphical overlay is displayed over the game that shows the next event and how
 
 ### Events
 
-There are currently 18+ events implementd in the mod, and more to come. Currently the focus is on polishing the mod but after that is complete many more events will be made.
+There are currently 18+ events implemented in the mod, and more to come. Currently the focus is on polishing the mod but after that is complete many more events will be made.
 
 <p align="center">
     <img src="https://github.com/WaxyCraft/MSFSChaosMod/blob/main/assets/samples/dive.gif" alt="GIF of Dive Event"/>
